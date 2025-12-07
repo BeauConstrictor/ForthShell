@@ -153,18 +153,50 @@ proc run_snippet(snippet: string): bool =
             return false
         stack.add loopStack[^1].int
 
-    elif base_words.hasKey(word):
-      let errMsg = base_words[word](stack, dictionary)
-      if errMsg.isSome:
-        stderr.write ":( " & errMsg.get()
-        return false
+    elif word == "begin":
+        var j = i + 1
+        var nestedBegin = 0
+        while j < words.len:
+            if words[j] == "begin":
+                nestedBegin += 1
+            elif words[j] == "until":
+                if nestedBegin == 0:
+                    break
+                else:
+                    nestedBegin -= 1
+            j += 1
+
+        if j == words.len:
+            stderr.write ":( unmatched begin"
+            return false
+
+        let snippet = words[i + 1 .. j - 1].join(" ")
+
+        while true:
+            if not run_snippet(snippet):
+                return false
+            if stack.len < 1:
+                stderr.write ":( stack underflow for until"
+                return false
+            let cond = stack.pop()
+            if cond != 0:
+                break
+
+        i = j
+
+    elif dictionary.hasKey(word):
+        if not run_snippet(dictionary[word]):
+            return false
 
     else:
-      if not dictionary.hasKey(word):
-        stderr.write ":( [" & word & "?]"
-        return false
-      if not run_snippet(dictionary[word]):
-        return false
+        if not base_words.hasKey(word):
+                stderr.write ":( [" & word & "?]"
+                return false
+        let errMsg = base_words[word](stack, dictionary)
+        if errMsg.isSome:
+            stderr.write ":( " & errMsg.get()
+            return false
+      
 
     i += 1
 

@@ -1,5 +1,6 @@
 import tables
 import options
+import terminal
 
 type
     base_word* = proc(stack: var seq[int], dict: Table[string, string]):
@@ -85,7 +86,11 @@ proc rot(stack: var seq[int], dict: Table[string, string]): Option[string] =
     stack.add n1
 base_words["rot"] = rot
 
-# output
+# i/o
+
+proc key(stack: var seq[int], dict: Table[string, string]): Option[string] =
+    stack.add getch().int
+base_words["key"] = key
 
 proc dot(stack: var seq[int], dict: Table[string, string]): Option[string] =
     stdout.write stack.pop()
